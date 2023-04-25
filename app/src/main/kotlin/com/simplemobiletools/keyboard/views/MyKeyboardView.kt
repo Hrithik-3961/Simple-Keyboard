@@ -13,6 +13,7 @@ import android.graphics.drawable.*
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
+import android.text.InputType
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.*
@@ -37,6 +38,7 @@ import com.simplemobiletools.keyboard.adapters.EmojisAdapter
 import com.simplemobiletools.keyboard.dialogs.ChangeLanguagePopup
 import com.simplemobiletools.keyboard.extensions.*
 import com.simplemobiletools.keyboard.helpers.*
+import com.simplemobiletools.keyboard.helpers.MyKeyboard.Companion.KEYCODE_CLEAR
 import com.simplemobiletools.keyboard.helpers.MyKeyboard.Companion.KEYCODE_DELETE
 import com.simplemobiletools.keyboard.helpers.MyKeyboard.Companion.KEYCODE_EMOJI
 import com.simplemobiletools.keyboard.helpers.MyKeyboard.Companion.KEYCODE_ENTER
@@ -160,10 +162,13 @@ class MyKeyboardView @JvmOverloads constructor(context: Context, attrs: Attribut
     private var mShowKeyBorders: Boolean = false
     private var mUsingSystemTheme: Boolean = true
 
+    private var mCustomButtons: View? = null
     private var mToolbarHolder: View? = null
     private var mClipboardManagerHolder: View? = null
     private var mEmojiPaletteHolder: View? = null
     private var emojiCompatMetadataVersion = 0
+
+    private lateinit var mParentRootView: View
 
     // For multi-tap
     private var mLastTapTime = 0L
@@ -254,6 +259,9 @@ class MyKeyboardView @JvmOverloads constructor(context: Context, attrs: Attribut
     @SuppressLint("HandlerLeak")
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+
+        mParentRootView = parent as View
+
         if (mHandler == null) {
             mHandler = object : Handler() {
                 override fun handleMessage(msg: Message) {
@@ -307,9 +315,43 @@ class MyKeyboardView @JvmOverloads constructor(context: Context, attrs: Attribut
 
     /** Sets the top row above the keyboard containing a couple buttons and the clipboard **/
     fun setKeyboardHolder(keyboardHolder: View) {
+        mCustomButtons = keyboardHolder.custom_buttons
         mToolbarHolder = keyboardHolder.toolbar_holder
         mClipboardManagerHolder = keyboardHolder.clipboard_manager_holder
         mEmojiPaletteHolder = keyboardHolder.emoji_palette_holder
+
+        mCustomButtons!!.apply {
+            type_hello.setOnClickListener {
+                mOnKeyboardActionListener!!.onKey(KEYCODE_CLEAR)
+                mOnKeyboardActionListener!!.onText(context.getString(R.string.hello))
+            }
+
+//            custom_input.setOnTouchListener { view, motionEvent ->
+//                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+//                val focusedView = mParentRootView?.findFocus()
+//                if(focusedView != null) {
+//                    focusedView.clearFocus()
+//                    val windowToken = focusedView.windowToken
+//                    imm.hideSoftInputFromWindow(windowToken, InputMethodManager.RESULT_UNCHANGED_SHOWN)
+////                    custom_input.setText("ksgdiq")
+//                }
+//                custom_input.requestFocus()
+//                val ic = custom_input.onCreateInputConnection(EditorInfo())
+//                if(ic != null)
+//                    mOnKeyboardActionListener!!.setInputConnection(ic)
+//
+//                return@setOnTouchListener true
+//            }
+
+            custom_input.inputType = custom_input.inputType or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+
+            btn_complete.setOnClickListener {
+                val data = custom_input.text.toString().trim()
+                mOnKeyboardActionListener!!.onKey(KEYCODE_CLEAR)
+                mOnKeyboardActionListener!!.onText(data)
+                custom_input.text = null
+            }
+        }
 
         mToolbarHolder!!.apply {
             settings_cog.setOnLongClickListener { context.toast(R.string.settings); true; }
@@ -409,6 +451,13 @@ class MyKeyboardView @JvmOverloads constructor(context: Context, attrs: Attribut
         layerDrawable.findDrawableByLayerId(R.id.clipboard_background_shape).applyColorFilter(mBackgroundColor)
 
         val wasDarkened = mBackgroundColor != mBackgroundColor.darkenColor()
+
+        mCustomButtons?.apply {
+            background = ColorDrawable(toolbarColor)
+            custom_input.setTextColor(mTextColor)
+            custom_buttons_divider.background = ColorDrawable(strokeColor)
+        }
+
         mToolbarHolder?.apply {
             top_keyboard_divider.beGoneIf(wasDarkened)
             top_keyboard_divider.background = ColorDrawable(strokeColor)
@@ -1428,10 +1477,12 @@ class MyKeyboardView @JvmOverloads constructor(context: Context, attrs: Attribut
 
     fun closeClipboardManager() {
         mClipboardManagerHolder?.clipboard_manager_holder?.beGone()
+        mCustomButtons?.beVisible()
     }
 
     private fun openClipboardManager() {
         mClipboardManagerHolder!!.clipboard_manager_holder.beVisible()
+        mCustomButtons?.beGone()
         setupStoredClips()
     }
 
@@ -1531,6 +1582,7 @@ class MyKeyboardView @JvmOverloads constructor(context: Context, attrs: Attribut
 
     fun openEmojiPalette() {
         mEmojiPaletteHolder!!.emoji_palette_holder.beVisible()
+        mCustomButtons?.beGone()
         setupEmojis()
     }
 
@@ -1539,6 +1591,7 @@ class MyKeyboardView @JvmOverloads constructor(context: Context, attrs: Attribut
             emoji_palette_holder?.beGone()
             mEmojiPaletteHolder?.emojis_list?.scrollToPosition(0)
         }
+        mCustomButtons?.beVisible()
     }
 
     private fun setupEmojis() {

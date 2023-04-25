@@ -95,6 +95,11 @@ class SimpleKeyboardIME : InputMethodService(), MyKeyboardView.OnKeyboardActionL
         }
 
         when (code) {
+
+            MyKeyboard.KEYCODE_CLEAR -> {
+                inputConnection.deleteSurroundingText(Integer.MAX_VALUE, Integer.MAX_VALUE)
+            }
+
             MyKeyboard.KEYCODE_DELETE -> {
                 if (keyboard!!.mShiftState == SHIFT_ON_ONE_CHAR) {
                     keyboard!!.mShiftState = SHIFT_OFF
