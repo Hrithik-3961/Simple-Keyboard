@@ -168,8 +168,6 @@ class MyKeyboardView @JvmOverloads constructor(context: Context, attrs: Attribut
     private var mEmojiPaletteHolder: View? = null
     private var emojiCompatMetadataVersion = 0
 
-    private lateinit var mParentRootView: View
-
     // For multi-tap
     private var mLastTapTime = 0L
 
@@ -260,8 +258,6 @@ class MyKeyboardView @JvmOverloads constructor(context: Context, attrs: Attribut
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
 
-        mParentRootView = parent as View
-
         if (mHandler == null) {
             mHandler = object : Handler() {
                 override fun handleMessage(msg: Message) {
@@ -326,22 +322,7 @@ class MyKeyboardView @JvmOverloads constructor(context: Context, attrs: Attribut
                 mOnKeyboardActionListener!!.onText(context.getString(R.string.hello))
             }
 
-//            custom_input.setOnTouchListener { view, motionEvent ->
-//                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-//                val focusedView = mParentRootView?.findFocus()
-//                if(focusedView != null) {
-//                    focusedView.clearFocus()
-//                    val windowToken = focusedView.windowToken
-//                    imm.hideSoftInputFromWindow(windowToken, InputMethodManager.RESULT_UNCHANGED_SHOWN)
-////                    custom_input.setText("ksgdiq")
-//                }
-//                custom_input.requestFocus()
-//                val ic = custom_input.onCreateInputConnection(EditorInfo())
-//                if(ic != null)
-//                    mOnKeyboardActionListener!!.setInputConnection(ic)
-//
-//                return@setOnTouchListener true
-//            }
+            custom_input.setText("Dummy Text")
 
             custom_input.inputType = custom_input.inputType or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
 
